@@ -63,6 +63,11 @@ parser.add_argument(
     help='Text file with people\'s names. Delimit with newlines.'
 )
 parser.add_argument(
+    '-m', '--message-file',
+    default=None,
+    help=f'{Pairing.to_textfile.__doc__}'
+)
+parser.add_argument(
     '-s', '--seed',
     default=None,
     help='Seed value for random shuffle. '
@@ -125,11 +130,19 @@ for _ in range(2):
         pair.check()
 
 
+if args.message_file is None:
+    message = 'RECIPIENT'
+    LOGGER.info('Default message loaded')
+else:
+    with open(Path(args.message_file)) as msgfile:
+        message = msgfile.read().strip()
+    LOGGER.info(f'Message from "{args.message_file}" loaded')
+
 output_folder = Path(group_file.stem)
 output_folder.mkdir(exist_ok=True)
 LOGGER.info(f'Saving outputs to: "./{output_folder}/"')
 
 for pair in pairings:
-    pair.to_textfile(output_folder, 'SANTA -> RECIPIENT')
+    pair.to_textfile(output_folder, message)
 
 LOGGER.info(f'{len(pairings)} files created. Merry Christmas!!')
