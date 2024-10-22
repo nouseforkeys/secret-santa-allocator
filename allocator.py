@@ -9,7 +9,7 @@ from pathlib import Path
 from random import shuffle, seed
 from time import time
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(Path(__file__).name)
 
 
 @dataclass
