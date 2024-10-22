@@ -12,6 +12,10 @@ from time import time
 LOGGER = logging.getLogger(Path(__file__).name)
 
 
+class AllocationError(ValueError):
+    """custom error for if something goes wrong with the allocating"""
+
+
 @dataclass
 class Pairing:
     """stores the names of the secret santa pairing"""
@@ -30,6 +34,11 @@ class Pairing:
         with open(filename, 'w') as textfile:
             textfile.write(file_message + '\n')
         LOGGER.debug(f'Created "{filename}" with text: "{file_message}"')
+
+    def check(self) -> None:
+        """raises an exception if this pair's santa and recipient match"""
+        if self.santa == self.recipient:
+            raise AllocationError(f'Someone got themselves! {self}')
 
 
 def import_group(filepath: Path) -> list[Pairing]:
@@ -83,9 +92,9 @@ else:
     seed(args.seed)
     LOGGER.info(f'Random seed using specified value: {args.seed}')
 
-LOGGER.info('Allocating pairs...')
+
+LOGGER.info('He\'s making a list...')
 remaining = [pair.santa for pair in pairings]
-# allocate a recipient to each santa
 for pair in pairings:
     LOGGER.debug(f'Allocating for: {pair.santa}')
     # create a list of remaining recipients without the santa
@@ -108,6 +117,13 @@ for pair in pairings:
     LOGGER.debug(f'{pair=}')
     # remove the recipient from the remaining names
     remaining.remove(pair.recipient)
+
+
+LOGGER.info('...And checking it twice!')
+for _ in range(2):
+    for pair in pairings:
+        pair.check()
+
 
 output_folder = Path(group_file.stem)
 output_folder.mkdir(exist_ok=True)
