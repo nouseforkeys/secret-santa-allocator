@@ -10,7 +10,6 @@ from random import shuffle, seed
 from time import time
 
 LOGGER = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
 
 
 @dataclass
@@ -18,6 +17,19 @@ class Pairing:
     """stores the names of the secret santa pairing"""
     santa: str
     recipient: str | None = None
+
+    def to_textfile(self, folder: Path, message: str) -> None:
+        """
+        Creates a textfile for the pairing. Keywords SANTA and RECIPIENT are
+        replaced with this pairing's values
+        """
+        filename = folder / f'{self.santa}.txt'
+        file_message = message\
+            .replace('SANTA', self.santa).\
+            replace('RECIPIENT', self.recipient)
+        with open(filename, 'w') as textfile:
+            textfile.write(file_message + '\n')
+        LOGGER.debug(f'Created "{filename}" with text: "{file_message}"')
 
 
 def import_group(filepath: Path) -> list[Pairing]:
@@ -44,20 +56,32 @@ parser.add_argument(
 parser.add_argument(
     '-s', '--seed',
     default=None,
-    help='sSed value for random shuffle. '
+    help='Seed value for random shuffle. '
     'Leave unspecified to just use the time',
+)
+parser.add_argument(
+    '-d', '--debug-logs',
+    action='store_true',
+    help='Set to enable debug level logs (You\'ll see all the allocations so '
+    'don\'t use when allocating for real!)'
 )
 args = parser.parse_args()
 
-pairings = import_group(args.group)
+if args.debug_logs:
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
+
+group_file = Path(args.group)
+pairings = import_group(group_file)
 
 if args.seed is None:
     time_seed = time()
     seed(time_seed)
-    LOGGER.info(f'random seed using time: {time_seed}')
+    LOGGER.info(f'Random seed using time: {time_seed}')
 else:
     seed(args.seed)
-    LOGGER.info(f'random seed using specified value: {args.seed}')
+    LOGGER.info(f'Random seed using specified value: {args.seed}')
 
 LOGGER.info('Allocating pairs...')
 remaining = [pair.santa for pair in pairings]
@@ -84,3 +108,12 @@ for pair in pairings:
     LOGGER.debug(f'{pair=}')
     # remove the recipient from the remaining names
     remaining.remove(pair.recipient)
+
+output_folder = Path(group_file.stem)
+output_folder.mkdir(exist_ok=True)
+LOGGER.info(f'Saving outputs to: "./{output_folder}/"')
+
+for pair in pairings:
+    pair.to_textfile(output_folder, 'SANTA -> RECIPIENT')
+
+LOGGER.info(f'{len(pairings)} files created. Merry Christmas!!')
