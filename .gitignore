@@ -1,3 +1,5 @@
 # venv
 .venv/
 
+# input/output text files
+*.txt
