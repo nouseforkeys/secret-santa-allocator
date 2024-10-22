@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.DEBUG)
 class Pairing:
     """stores the names of the secret santa pairing"""
     santa: str
-    recipient: str|None = None
+    recipient: str | None = None
 
 
 def import_group(filepath: Path) -> list[Pairing]:
@@ -49,11 +49,15 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-pairings = import_group('group_2024.txt')
+pairings = import_group(args.group)
 
-time_seed = time()
-seed(time_seed)
-LOGGER.info(f'random seed: {time_seed}')
+if args.seed is None:
+    time_seed = time()
+    seed(time_seed)
+    LOGGER.info(f'random seed using time: {time_seed}')
+else:
+    seed(args.seed)
+    LOGGER.info(f'random seed using specified value: {args.seed}')
 
 LOGGER.info('Allocating pairs...')
 remaining = [pair.santa for pair in pairings]
